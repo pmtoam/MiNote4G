@@ -4,71 +4,87 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * 
- */
+import android.util.Log;
+
 public final class HideUtility {
 
 	private static final int TIMES = 11;
 
-	private static final int CIPHER_FIXED_LENGHT = 21;
+	private static final int CIPHER_FIXED_LENGTH = 21;
 
+	//like 10086, 95555 etc.
 	private static final int PUBLIC_SERVICE_PHONE_LENGTH = 6;
 
 	private static final int LAST_TWO_BITS_INDICATOR = 2;
+	
+	//China mobile long distance code
+	private static final String CHINA_MOBILE_LDC = "17951";
 
+	
 	public static final String number2hide(String phoneNumber) throws Exception {
 		if (phoneNumber == null || phoneNumber.length() == 0) {
 			return phoneNumber;
 		}
-
 		boolean isIpCall = false;
-		final String IP = "17951";
-		if (phoneNumber.substring(0, 5).equals(IP)) {
-			isIpCall = true;
-
-			phoneNumber = phoneNumber.substring(5);
-		}
-
+		int phoneLength = phoneNumber.length();
+		Log.e("cc", "phone length is " + String.valueOf(phoneLength));
 		if (phoneNumber.charAt(0) == '+') {
 			phoneNumber = phoneNumber.substring(1);
 		}
-
-		if (phoneNumber.length() > CIPHER_FIXED_LENGHT
+		
+		if (phoneNumber.length() >= CHINA_MOBILE_LDC.length()){
+			if((phoneNumber.substring(0, 5).equals(CHINA_MOBILE_LDC))){
+				isIpCall = true;
+				phoneNumber = phoneNumber.substring(5);
+			}
+		}
+		
+		if (phoneNumber.length() >= CIPHER_FIXED_LENGTH
 				- LAST_TWO_BITS_INDICATOR) {
 			// already a cipher number, or most likely, an invalid number
+			// do not encrypt this number
 			if (isIpCall) {
-				return IP + phoneNumber;
+				//return ip + encryption string number
+				return CHINA_MOBILE_LDC + phoneNumber;
 			}
 			return phoneNumber;
 		}
 
+		//no need to encrypt public service phone number
 		if (phoneNumber.length() <= PUBLIC_SERVICE_PHONE_LENGTH) {
-			// already a cipher number, or most likely, an invalid number
 			if (isIpCall) {
-				return IP + phoneNumber;
+				return CHINA_MOBILE_LDC + phoneNumber;
 			}
 			return phoneNumber;
 		}
 
+		//now do the real encrypt job
 		String hide1 = hide(phoneNumber, TIMES);
 
-		String hide2 = padding(hide1, CIPHER_FIXED_LENGHT);
+		String hide2 = padding(hide1, CIPHER_FIXED_LENGTH);
 
 		if (isIpCall) {
-			return IP + hide2;
+			return CHINA_MOBILE_LDC + hide2;
 		}
 		return hide2;
 	}
 
 	/***
-	 * cipher = head + hide1(body) + two bits cipher length is
-	 * CIPHER_FIXED_LENGHT
+	 * must make the output length of padding up to CIPHER_FIXED_LENGTH
+	 * cipher = head + hide1(body) + two bits cipher. length is
+	 * CIPHER_FIXED_LENGTH
+	 * 
+	 * @param lengthLimit  length must pad to
+	 * @param body         body to pad
 	 * */
-	private static final String padding(String body, int lenght2hide) {
+	private static final String padding(String body, int lengthLimit) {
 		int length = body.length();
-		final int length2pad = lenght2hide - length - 2;
+		final int length2pad = lengthLimit - length - LAST_TWO_BITS_INDICATOR;
 
+		if(length2pad <= 0){
+			return body;
+		}
+		
 		int rest2pad = length2pad;
 
 		String padHead = "";
@@ -97,42 +113,69 @@ public final class HideUtility {
 		return last;
 	}
 
+	/**
+	 * Decryption phone number, when ui get the number from system or
+	 * when system call the modem
+	 * 
+	 * TODO: when input length is CIPHER_FIXED_LENGTH, it may still a 
+	 * plain text.
+	 * */
 	public static final String number2show(String phoneNumber) throws Exception {
 		if (phoneNumber == null || phoneNumber.length() == 0) {
 			return phoneNumber;
 		}
 
 		boolean isIpCall = false;
-		final String IP = "17951";
-		if (phoneNumber.substring(0, 5).equals(IP)) {
-			isIpCall = true;
 
-			phoneNumber = phoneNumber.substring(5);
+		int lth = phoneNumber.length();
+		if(lth >= CHINA_MOBILE_LDC.length()){
+			if (phoneNumber.substring(0, 5).equals(CHINA_MOBILE_LDC)) {
+				isIpCall = true;
+
+				phoneNumber = phoneNumber.substring(5);
+			}
 		}
-
-		if (phoneNumber.length() != CIPHER_FIXED_LENGHT) {
-			// already a cipher number, or most likely, an invalid number, or
-			// has +
+		//phone not encrypt yet, like 10086/955555 etc, it is not a cipher text
+		if (phoneNumber.length() != CIPHER_FIXED_LENGTH) {
+			//with '+'
 			if (phoneNumber.length() != 22) {
 				if (isIpCall) {
-					return IP + phoneNumber;
+					return CHINA_MOBILE_LDC + phoneNumber;
 				}
 				return phoneNumber;
 			} else {
-				// with +, maybe
+				// with '+' maybe
+				//TODO: strange here
 				char first = phoneNumber.charAt(0);
 				if (first != '+') {
 					if (isIpCall) {
-						return IP + phoneNumber;
+						return CHINA_MOBILE_LDC + phoneNumber;
 					}
 					return phoneNumber;
 				}
 			}
-
+			return phoneNumber;
 		}
 		if (phoneNumber.charAt(0) == '+') {
 			phoneNumber = phoneNumber.substring(1);
 		}
+		
+		//TODO when input length is 21, can not know it is a 
+		//plain text or encrypt text
+		//check the last two bit, if more than 19, return 
+		int length = phoneNumber.length();
+		String twobitString = phoneNumber.substring(length - 2);
+		int twobitInt = 0;
+		try{
+			twobitInt = Integer.parseInt(twobitString);
+		}catch(Exception e){
+			return phoneNumber;
+		}
+		
+		if(twobitInt > CIPHER_FIXED_LENGTH - LAST_TWO_BITS_INDICATOR){
+			return phoneNumber;
+		}
+		//do the real work, it is must the valid encrypt phone
 		String body = unpadding(phoneNumber);
 
 		String realPhone = show(body, TIMES);
@@ -145,12 +188,18 @@ public final class HideUtility {
 		}
 
 		if (isIpCall) {
-			return IP + realPhone;
+			return CHINA_MOBILE_LDC + realPhone;
 		}
 		return realPhone;
 	}
 
 	private static final String unpadding(String input) {
+		if(input == null || input.length() == 0){
+			return input;
+		}
+		if(input.length() != CIPHER_FIXED_LENGTH){
+			return input;
+		}
 		int length = input.length();
 		String twobitString = input.substring(length - 2);
 		int twobitInt = Integer.parseInt(twobitString);
@@ -339,34 +388,36 @@ public final class HideUtility {
 
 		return _str_9;
 	}
-
 	private static final String hide(String phoneNumber, int times)
 			throws Exception {
-		List<String> strs = new ArrayList<String>(times);
-
-		for (int i = 0; i < times; i++) {
-			if (i == 0)
-				strs.add(hide(phoneNumber));
-			else
-				strs.add(hide(strs.get(i - 1)));
+		if(times <= 0){
+			return phoneNumber;
+		}
+		if(isEmpty(phoneNumber)){
+			return phoneNumber;
 		}
 
-		return strs.get(strs.size() - 1);
+		String result = phoneNumber;
+		for(int i = 0; i < times; i++){
+			result = hide(result);
+		}
+		return result;
 	}
-
 	private static final String show(String phoneNumber, int times)
 			throws Exception {
 
-		List<String> strs = new ArrayList<String>();
+		if(times <= 0){
+			return phoneNumber;
+		}
+		if(isEmpty(phoneNumber)){
+			return phoneNumber;
+		}
+		String result = phoneNumber;
 
 		for (int i = 0; i < times; i++) {
-			if (i == 0)
-				strs.add(show(phoneNumber));
-			else
-				strs.add(show(strs.get(i - 1)));
+			result = show(result);
 		}
-
-		return strs.get(strs.size() - 1);
+		return result;
 	}
 
 	private static final void contract(List<String> _contracted_strs,

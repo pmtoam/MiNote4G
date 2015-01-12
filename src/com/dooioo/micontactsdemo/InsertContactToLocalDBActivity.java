@@ -36,6 +36,8 @@ public class InsertContactToLocalDBActivity extends Activity
 		values.put(Phone.NUMBER, "18977778891");
 		values.put(Phone.TYPE, Phone.TYPE_MOBILE);
 		
+		StringUtils.hideValuesNumber(values);
+		
 		StringUtils.reviseValues(values);
 		
 		getContentResolver().insert(ContactsContract.Data.CONTENT_URI, values);

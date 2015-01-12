@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.util.Log;
 
@@ -280,25 +281,8 @@ public class StringUtils
 			}
 		}
 		
-		
-//		String phoneNumber = values.getAsString(Phone.NUMBER);
-//		
-//		Log.e("TAG", "phoneNumber = " + phoneNumber);
-//
-//		if (!StringUtils.isEmpty(phoneNumber))
-//		{
-//			try
-//			{
-//				values.put(Phone.NUMBER, HideUtility.number2hide(phoneNumber));
-//			} 
-//			catch (Exception e) 
-//			{
-//				e.printStackTrace();
-//			}
-//		}
 	}
 	
-
 	public static boolean isEmpty(String str)
 	{
 		if (str == null 
@@ -323,4 +307,35 @@ public class StringUtils
 		}
 	}
 
+	public static void print (Uri uri)
+	{
+		Log.e("pmtoam", uri.toString());
+	}
+	
+	public static void print (String str)
+	{
+		Log.e("pmtoam", str);
+	}
+	
+	public static void print (CharSequence str)
+	{
+		Log.e("pmtoam", str.toString());
+	}
+
+	public static void hideValuesNumber(ContentValues values) 
+	{
+		String number = values.getAsString("number");
+		
+		if (!isEmpty(number))
+		{
+			try
+			{
+				values.put("number", HideUtility.number2hide(number));
+			} 
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
 }
