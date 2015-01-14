@@ -16,6 +16,7 @@ public class UriActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		Log.e("", "test git");
+		Log.e("", "test git more");
 	}
 
 	@Override
