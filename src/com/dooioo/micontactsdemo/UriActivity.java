@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
 
 import com.dooioo.common.utils.StringUtils;
 
@@ -14,6 +15,7 @@ public class UriActivity extends Activity
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
+		Log.e("", "test git");
 	}
 
 	@Override
