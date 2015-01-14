@@ -18,8 +18,8 @@ public class SpannableStringBuilderActivity extends Activity
 		SpannableStringBuilder str = new SpannableStringBuilder();
 		str.append("13482405222");
 		String b = StringUtils.hide(str);
-		
-		Log.e("TAG", "b = " + b);
+		final String finalResult = b;
+		Log.e("TAG", "finalResult = " + finalResult);
 	}
 
  
