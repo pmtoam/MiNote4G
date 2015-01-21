@@ -11,12 +11,15 @@ import com.dooioo.minote.R;
 public class MainActivity extends Activity
 {
 
+	public static boolean isOnCreate;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		isOnCreate = true;
 		
 		TextView tv_test = (TextView) findViewById(R.id.tv_test);
 		tv_test.setText("For test.");
